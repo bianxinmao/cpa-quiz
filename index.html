@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <title>CPA随机题库</title>
+  <link rel="stylesheet" href="./assets/styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <header class="top-bar">
+      <div>
+        <h1>CPA随机题库</h1>
+        <p id="bank-status" class="status">题库加载中…</p>
+      </div>
+      <nav class="mode-buttons" aria-label="练习模式">
+        <button id="start-all" type="button" class="button primary">随机练习</button>
+        <button id="start-wrong" type="button" class="button">只练错题</button>
+      </nav>
+    </header>
+
+    <section id="question-card" class="question-card" hidden>
+      <div class="question-meta">
+        <span id="question-index" class="pill"></span>
+        <span id="question-type" class="pill"></span>
+        <span id="question-topic" class="pill"></span>
+      </div>
+
+      <p id="question-stem" class="question-stem"></p>
+
+      <form id="answer-form">
+        <div id="options" class="options"></div>
+
+        <div class="actions">
+          <button id="submit-answer" type="submit" class="button primary grow">提交答案</button>
+          <button id="next-question" type="button" class="button grow" hidden>下一题</button>
+          <button id="remove-wrong" type="button" class="button danger grow" hidden>移出错题本</button>
+        </div>
+      </form>
+
+      <section id="result-panel" class="result-panel" aria-live="polite" hidden>
+        <p id="result-title" class="result-title"></p>
+        <dl class="answer-comparison">
+          <div>
+            <dt>你的答案</dt>
+            <dd id="user-answer"></dd>
+          </div>
+          <div>
+            <dt>正确答案</dt>
+            <dd id="correct-answer"></dd>
+          </div>
+        </dl>
+        <div class="analysis">
+          <h2>解析</h2>
+          <p id="question-analysis"></p>
+        </div>
+      </section>
+    </section>
+
+    <section id="empty-state" class="empty-state">
+      <h2 id="empty-title">准备开始</h2>
+      <p id="empty-description">选择一种模式开始练习。答错的题会自动进入本机错题本。</p>
+    </section>
+  </main>
+
+  <script src="./assets/app.js"></script>
+</body>
+</html>

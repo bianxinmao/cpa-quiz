@@ -1,0 +1,362 @@
+:root {
+  color-scheme: light dark;
+  --page: #f4f6f8;
+  --surface: #ffffff;
+  --surface-muted: #eef2f5;
+  --border: #d8e0e6;
+  --text: #18212a;
+  --muted: #5d6b77;
+  --primary: #1663a8;
+  --primary-contrast: #ffffff;
+  --danger: #a82929;
+  --danger-contrast: #ffffff;
+  --correct: #177245;
+  --correct-soft: #dff2e6;
+  --wrong: #a82929;
+  --wrong-soft: #fbe8e8;
+  --shadow: 0 8px 24px rgba(24, 33, 42, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --page: #111519;
+    --surface: #191f25;
+    --surface-muted: #222a32;
+    --border: #343f49;
+    --text: #edf1f4;
+    --muted: #a4b0ba;
+    --primary: #61a7dd;
+    --primary-contrast: #0d1418;
+    --danger: #e06d6d;
+    --danger-contrast: #191112;
+    --correct: #70c693;
+    --correct-soft: #203728;
+    --wrong: #e06d6d;
+    --wrong-soft: #3a2222;
+    --shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--page);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  font-size: 17px;
+  line-height: 1.65;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.app-shell {
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: max(16px, env(safe-area-inset-top)) 16px max(24px, env(safe-area-inset-bottom));
+}
+
+.top-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+h1,
+h2 {
+  margin: 0;
+  line-height: 1.3;
+}
+
+h1 {
+  font-size: 1.35rem;
+}
+
+h2 {
+  font-size: 1.05rem;
+}
+
+.status {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.mode-buttons,
+.actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.button {
+  min-height: 48px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 11px 14px;
+  cursor: pointer;
+  transition: transform 0.12s ease, background-color 0.12s ease, border-color 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.button:focus-visible,
+.option input:focus-visible + .option-content {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.button:active {
+  transform: translateY(1px);
+}
+
+.button.primary {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-contrast);
+  font-weight: 650;
+}
+
+.button.primary:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.button.danger {
+  border-color: var(--danger);
+  background: var(--danger);
+  color: var(--danger-contrast);
+  font-weight: 600;
+}
+
+.grow {
+  width: 100%;
+}
+
+.question-card,
+.empty-state {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+
+.question-meta {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-bottom: 13px;
+}
+
+.pill {
+  display: inline-block;
+  max-width: 100%;
+  border-radius: 999px;
+  background: var(--surface-muted);
+  color: var(--muted);
+  padding: 4px 10px;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.question-stem {
+  margin: 0 0 18px;
+  font-size: 1.08rem;
+  font-weight: 650;
+  white-space: pre-line;
+}
+
+.options {
+  display: grid;
+  gap: 10px;
+}
+
+.option {
+  display: block;
+}
+
+.option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.option-content {
+  display: flex;
+  gap: 10px;
+  min-height: 52px;
+  align-items: flex-start;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 11px 12px;
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.option-key {
+  flex: 0 0 auto;
+  min-width: 26px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.option-text {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.option input:checked + .option-content {
+  border-color: var(--primary);
+}
+
+.option.is-correct .option-content,
+.option.is-correct input:checked + .option-content {
+  border-color: var(--correct);
+  background: var(--correct-soft);
+}
+
+.option.is-incorrect .option-content,
+.option.is-incorrect input:checked + .option-content {
+  border-color: var(--wrong);
+  background: var(--wrong-soft);
+}
+
+.option.is-incorrect .option-key,
+.option.is-correct .option-key {
+  font-weight: 800;
+}
+
+.option input:disabled + .option-content {
+  cursor: default;
+}
+
+.actions {
+  margin-top: 18px;
+}
+
+.result-panel {
+  margin-top: 18px;
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+}
+
+.result-title {
+  margin: 0 0 12px;
+  font-size: 1.15rem;
+  font-weight: 750;
+}
+
+.result-title.correct {
+  color: var(--correct);
+}
+
+.result-title.wrong {
+  color: var(--wrong);
+}
+
+.answer-comparison {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0 0 16px;
+}
+
+.answer-comparison div {
+  border-radius: 10px;
+  background: var(--surface-muted);
+  padding: 10px;
+}
+
+.answer-comparison dt {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.answer-comparison dd {
+  margin: 2px 0 0;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.analysis {
+  border-radius: 10px;
+  background: var(--surface-muted);
+  padding: 12px;
+}
+
+.analysis p {
+  margin: 0;
+  white-space: pre-line;
+}
+
+.empty-state {
+  display: grid;
+  gap: 8px;
+  text-align: center;
+}
+
+.empty-state p {
+  margin: 0;
+  color: var(--muted);
+}
+
+@media (min-width: 600px) {
+  .top-bar {
+    align-items: center;
+    justify-content: space-between;
+    flex-direction: row;
+  }
+
+  .mode-buttons {
+    flex: 0 0 auto;
+  }
+
+  .actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 379px) {
+  .app-shell {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+
+  .question-card,
+  .empty-state {
+    padding: 14px;
+  }
+
+  .answer-comparison {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+  }
+}
