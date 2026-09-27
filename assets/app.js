@@ -1,11 +1,13 @@
 "use strict";
 
 const STORAGE_KEY = "cpa-quiz-wrong-book-v1";
+const SESSION_STORAGE_KEY = "cpa-quiz-random-session-v1";
 
 const dom = {
   bankStatus: document.getElementById("bank-status"),
   startAll: document.getElementById("start-all"),
   startWrong: document.getElementById("start-wrong"),
+  restartAll: document.getElementById("restart-all"),
   questionCard: document.getElementById("question-card"),
   questionIndex: document.getElementById("question-index"),
   questionType: document.getElementById("question-type"),
@@ -74,6 +76,48 @@ function loadWrongBook() {
 
 function saveWrongBook() {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state.wrongBook));
+}
+
+function loadPracticeSession() {
+  try {
+    const rawValue = window.localStorage.getItem(SESSION_STORAGE_KEY);
+    if (!rawValue) return null;
+
+    const parsed = JSON.parse(rawValue);
+    if (!parsed || parsed.version !== 1 || parsed.mode !== "all" || !Array.isArray(parsed.queueIds)) {
+      return null;
+    }
+
+    return {
+      version: 1,
+      mode: "all",
+      queueIds: parsed.queueIds.map(normalizeText).filter(Boolean),
+      currentIndex: Number.isInteger(parsed.currentIndex) ? parsed.currentIndex : 0,
+      savedAt: typeof parsed.savedAt === "string" ? parsed.savedAt : "",
+    };
+  } catch (error) {
+    console.warn("练习进度读取失败，将重新开始。", error);
+    return null;
+  }
+}
+
+function savePracticeSession() {
+  if (state.mode !== "all" || state.queue.length === 0) return;
+
+  const session = {
+    version: 1,
+    mode: "all",
+    queueIds: state.queue.map((question) => question.id),
+    currentIndex: state.queueIndex,
+    savedAt: new Date().toISOString(),
+  };
+  window.localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(session));
+  updateStartAllControls();
+}
+
+function clearPracticeSession() {
+  window.localStorage.removeItem(SESSION_STORAGE_KEY);
+  updateStartAllControls();
 }
 
 function shuffle(items) {
@@ -175,11 +219,49 @@ function updateBankStatus() {
   dom.bankStatus.textContent = `题库 ${state.questions.length} 题｜错题本 ${wrongCount} 题`;
 }
 
+function updateStartAllControls() {
+  const hasPracticeSession = loadPracticeSession() !== null;
+  dom.startAll.textContent = hasPracticeSession ? "继续练习" : "随机练习";
+  dom.restartAll.hidden = !hasPracticeSession;
+}
+
 function showEmpty(title, description) {
   dom.questionCard.hidden = true;
   dom.emptyState.hidden = false;
   dom.emptyTitle.textContent = title;
   dom.emptyDescription.textContent = description;
+}
+
+function restorePracticeSession() {
+  const session = loadPracticeSession();
+  if (!session) return false;
+
+  const existingIds = new Set();
+  const queue = [];
+  session.queueIds.forEach((id) => {
+    if (existingIds.has(id) || !state.questionsById.has(id)) return;
+    existingIds.add(id);
+    queue.push(state.questionsById.get(id));
+  });
+
+  state.questions.forEach((question) => {
+    if (existingIds.has(question.id)) return;
+    existingIds.add(question.id);
+    queue.push(question);
+  });
+
+  if (queue.length === 0) {
+    clearPracticeSession();
+    return false;
+  }
+
+  state.mode = "all";
+  state.queue = queue;
+  state.queueIndex = Math.min(Math.max(session.currentIndex, 0), queue.length - 1);
+  dom.emptyState.hidden = true;
+  dom.questionCard.hidden = false;
+  renderQuestion();
+  return true;
 }
 
 function startQuiz(mode) {
@@ -197,6 +279,9 @@ function startQuiz(mode) {
 
   dom.emptyState.hidden = true;
   dom.questionCard.hidden = false;
+  if (mode === "all") {
+    savePracticeSession();
+  }
   renderQuestion();
 }
 
@@ -208,6 +293,9 @@ function renderQuestion() {
   }
 
   state.submitted = false;
+  if (state.mode === "all") {
+    savePracticeSession();
+  }
   dom.questionIndex.textContent = `第 ${state.queueIndex + 1}/${state.queue.length} 道`;
   dom.questionType.textContent = question.type === "single" ? "单选题" : "多选题";
   dom.questionTopic.textContent = question.topic || question.chapter || question.subject;
@@ -348,6 +436,7 @@ function handleRemoveWrong() {
 async function initialize() {
   dom.startAll.disabled = true;
   dom.startWrong.disabled = true;
+  dom.restartAll.disabled = true;
   try {
     state.questions = await loadQuestionBank();
     state.questionsById = new Map(state.questions.map((question) => [question.id, question]));
@@ -358,8 +447,10 @@ async function initialize() {
       saveWrongBook();
     }
     updateBankStatus();
+    updateStartAllControls();
     dom.startAll.disabled = false;
     dom.startWrong.disabled = false;
+    dom.restartAll.disabled = false;
   } catch (error) {
     console.error(error);
     showEmpty("题库加载失败", "请确认 data/questions.json 格式正确；部署后访问 index.html。");
@@ -370,7 +461,15 @@ async function initialize() {
 dom.answerForm.addEventListener("submit", handleSubmit);
 dom.nextQuestion.addEventListener("click", handleNext);
 dom.removeWrong.addEventListener("click", handleRemoveWrong);
-dom.startAll.addEventListener("click", () => startQuiz("all"));
+dom.startAll.addEventListener("click", () => {
+  if (!restorePracticeSession()) {
+    startQuiz("all");
+  }
+});
 dom.startWrong.addEventListener("click", () => startQuiz("wrong"));
+dom.restartAll.addEventListener("click", () => {
+  clearPracticeSession();
+  startQuiz("all");
+});
 
 initialize();

@@ -105,6 +105,10 @@ h2 {
   gap: 10px;
 }
 
+.span-two {
+  grid-column: span 2;
+}
+
 .button {
   min-height: 48px;
   border: 1px solid var(--border);
@@ -331,6 +335,11 @@ h2 {
 
   .mode-buttons {
     flex: 0 0 auto;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mode-buttons .span-two {
+    grid-column: auto;
   }
 
   .actions {
