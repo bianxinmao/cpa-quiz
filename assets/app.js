@@ -8,6 +8,7 @@ const dom = {
   startAll: document.getElementById("start-all"),
   startWrong: document.getElementById("start-wrong"),
   restartAll: document.getElementById("restart-all"),
+  exportWrong: document.getElementById("export-wrong"),
   questionCard: document.getElementById("question-card"),
   questionIndex: document.getElementById("question-index"),
   questionType: document.getElementById("question-type"),
@@ -217,6 +218,69 @@ function buildQueue(mode, previousId = "") {
 function updateBankStatus() {
   const wrongCount = Object.keys(state.wrongBook.questions).length;
   dom.bankStatus.textContent = `题库 ${state.questions.length} 题｜错题本 ${wrongCount} 题`;
+  dom.exportWrong.hidden = wrongCount === 0;
+}
+
+function buildWrongExport() {
+  const questions = Object.entries(state.wrongBook.questions)
+    .map(([id, record]) => {
+      const question = state.questionsById.get(id);
+      if (!question) return null;
+      return {
+        id: question.id,
+        subject: question.subject,
+        chapter: question.chapter,
+        topic: question.topic,
+        stem: question.stem,
+        options: Object.fromEntries(question.options.map((option) => [option.key, option.text])),
+        answer: question.answer.join(""),
+        lastAnswer: record.lastAnswer || "",
+        wrongCount: record.wrongCount,
+        correctCount: record.correctCount,
+        analysis: question.analysis,
+      };
+    })
+    .filter(Boolean);
+  return { version: 1, exportedAt: new Date().toISOString(), questions };
+}
+
+async function copyTextToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.append(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  textarea.remove();
+  if (!copied) throw new Error("copy failed");
+}
+
+async function handleExportWrong() {
+  const exportData = buildWrongExport();
+  if (exportData.questions.length === 0) {
+    showEmpty("错题本为空", "先做随机练习，答错的题会自动进入错题本。");
+    return;
+  }
+
+  try {
+    await copyTextToClipboard(JSON.stringify(exportData));
+    dom.exportWrong.textContent = "已复制，粘贴给Codex";
+    dom.exportWrong.disabled = true;
+    setTimeout(() => {
+      dom.exportWrong.textContent = "导出错题";
+      dom.exportWrong.disabled = false;
+    }, 2000);
+  } catch {
+    dom.exportWrong.textContent = "复制失败，请重试";
+    setTimeout(() => {
+      dom.exportWrong.textContent = "导出错题";
+    }, 2000);
+  }
 }
 
 function updateStartAllControls() {
@@ -437,6 +501,7 @@ async function initialize() {
   dom.startAll.disabled = true;
   dom.startWrong.disabled = true;
   dom.restartAll.disabled = true;
+  dom.exportWrong.disabled = true;
   try {
     state.questions = await loadQuestionBank();
     state.questionsById = new Map(state.questions.map((question) => [question.id, question]));
@@ -451,6 +516,7 @@ async function initialize() {
     dom.startAll.disabled = false;
     dom.startWrong.disabled = false;
     dom.restartAll.disabled = false;
+    dom.exportWrong.disabled = false;
   } catch (error) {
     console.error(error);
     showEmpty("题库加载失败", "请确认 data/questions.json 格式正确；部署后访问 index.html。");
@@ -467,6 +533,7 @@ dom.startAll.addEventListener("click", () => {
   }
 });
 dom.startWrong.addEventListener("click", () => startQuiz("wrong"));
+dom.exportWrong.addEventListener("click", handleExportWrong);
 dom.restartAll.addEventListener("click", () => {
   clearPracticeSession();
   startQuiz("all");
